@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SENTINEL Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080c12;
+  --surface: #0e1420;
+  --surface2: #131b28;
+  --border: #1e2d42;
+  --border2: #243347;
+  --accent: #00d4ff;
+  --accent2: #ff3d5a;
+  --accent3: #00ff9d;
+  --accent4: #ffb800;
+  --text: #e2eaf4;
+  --text2: #7a90aa;
+  --text3: #3d5270;
+  --mono: 'DM Mono', monospace;
+  --display: 'Syne', sans-serif;
+  --body: 'Noto Sans JP', sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 13px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+body::after {
+  content: '';
+  position: fixed;
+  top: -200px;
+  left: -200px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+.layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+.sidebar-logo {
+  padding: 20px 18px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-icon {
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, #00d4ff20, #00d4ff40);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 12px rgba(0,212,255,0.2);
+}
+.logo-icon svg { width: 18px; height: 18px; }
+.logo-text { font-family: var(--display); font-size: 17px; font-weight: 800; }
+.logo-version { font-family: var(--mono); font-size: 9px; color: var(--accent); letter-spacing: 1px; margin-top: 1px; }
+.sidebar-section { padding: 16px 12px 6px; }
+.sidebar-section-label { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--text3); text-transform: uppercase; padding: 0 6px; margin-bottom: 4px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 6px; cursor: pointer; transition: all 0.15s; margin-bottom: 2px; position: relative; font-size: 12.5px; color: var(--text2); }
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: rgba(0,212,255,0.08); color: var(--accent); border: 1px solid rgba(0,212,255,0.15); }
+.nav-item.active::before { content: ''; position: absolute; left: 0; top: 20%; height: 60%; width: 2px; background: var(--accent); border-radius: 2px; box-shadow: 0 0 6px var(--accent); }
+.nav-icon { font-size: 14px; width: 18px; text-align: center; }
+.nav-badge { margin-left: auto; background: var(--accent2); color: white; font-family: var(--mono); font-size: 9px; padding: 2px 6px; border-radius: 10px; }
+.sidebar-spacer { flex: 1; }
+.sidebar-bottom { padding: 12px; border-top: 1px solid var(--border); }
+.user-card { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; background: var(--surface2); }
+.user-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #00d4ff, #0080ff); display: flex; align-items: center; justify-content: center; font-family: var(--display); font-size: 12px; font-weight: 700; color: white; flex-shrink: 0; }
+.user-name { font-size: 12px; font-weight: 500; }
+.user-role { font-size: 10px; color: var(--text2); }
+.main { display: flex; flex-direction: column; min-height: 100vh; }
+.topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 10; }
+.topbar-title { font-family: var(--display); font-size: 16px; font-weight: 700; }
+.topbar-sub { font-family: var(--mono); font-size: 10px; color: var(--text2); }
+.topbar-spacer { flex: 1; }
+.topbar-location { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px; color: var(--text2); background: var(--surface2); border: 1px solid var(--border); padding: 5px 12px; border-radius: 6px; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent3); box-shadow: 0 0 6px var(--accent3); animation: pulse 2s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+.topbar-alert { position: relative; width: 34px; height: 34px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; }
+.alert-count { position: absolute; top: -4px; right: -4px; background: var(--accent2); color: white; font-family: var(--mono); font-size: 8px; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.content { padding: 20px 24px; flex: 1; }
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; position: relative; overflow: hidden; animation: fadeUp 0.4s ease both; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.stat-card:nth-child(1) { animation-delay: 0.05s; }
+.stat-card:nth-child(2) { animation-delay: 0.1s; }
+.stat-card:nth-child(3) { animation-delay: 0.15s; }
+.stat-card:nth-child(4) { animation-delay: 0.2s; }
+.stat-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; }
+.stat-card.cyan::after { background: linear-gradient(90deg, transparent, var(--accent), transparent); }
+.stat-card.red::after { background: linear-gradient(90deg, transparent, var(--accent2), transparent); }
+.stat-card.green::after { background: linear-gradient(90deg, transparent, var(--accent3), transparent); }
+.stat-card.yellow::after { background: linear-gradient(90deg, transparent, var(--accent4), transparent); }
+.stat-label { font-family: var(--mono); font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text2); margin-bottom: 8px; }
+.stat-value { font-family: var(--display); font-size: 30px; font-weight: 800; line-height: 1; margin-bottom: 6px; }
+.stat-card.cyan .stat-value { color: var(--accent); }
+.stat-card.red .stat-value { color: var(--accent2); }
+.stat-card.green .stat-value { color: var(--accent3); }
+.stat-card.yellow .stat-value { color: var(--accent4); }
+.stat-change { font-family: var(--mono); font-size: 10px; color: var(--text2); }
+.stat-change span { color: var(--accent3); }
+.grid-main { display: grid; grid-template-columns: 1fr 340px; gap: 12px; margin-bottom: 16px; }
+.camera-grid { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.panel-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.panel-title { font-family: var(--display); font-size: 13px; font-weight: 700; }
+.panel-sub { font-family: var(--mono); font-size: 10px; color: var(--text2); margin-left: auto; }
+.cameras { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
+.cam { background: #040810; aspect-ratio: 16/10; position: relative; overflow: hidden; cursor: pointer; }
+.cam-bg { width: 100%; height: 100%; position: relative; }
+.cam-1 .cam-bg { background: radial-gradient(ellipse at 60% 40%, #1a2a1a 0%, #050b05 100%); }
+.cam-2 .cam-bg { background: radial-gradient(ellipse at 40% 60%, #1a1a2a 0%, #05050b 100%); }
+.cam-3 .cam-bg { background: radial-gradient(ellipse at 50% 30%, #2a1a1a 0%, #0b0505 100%); }
+.cam-4 .cam-bg { background: radial-gradient(ellipse at 30% 70%, #1a2a2a 0%, #050b0b 100%); }
+.cam-bg::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px); pointer-events: none; }
+.cam-bg::after { content: ''; position: absolute; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, rgba(0,212,255,0.4), transparent); animation: scan 4s linear infinite; opacity: 0.6; }
+.cam-1 .cam-bg::after { animation-delay: 0s; }
+.cam-2 .cam-bg::after { animation-delay: 1s; }
+.cam-3 .cam-bg::after { animation-delay: 2s; }
+.cam-4 .cam-bg::after { animation-delay: 3s; }
+@keyframes scan { 0% { top: -2px; } 100% { top: 100%; } }
+.cam-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 6px 8px; background: linear-gradient(transparent, rgba(0,0,0,0.8)); display: flex; align-items: center; gap: 6px; }
+.cam-name { font-family: var(--mono); font-size: 9px; color: rgba(255,255,255,0.8); letter-spacing: 1px; }
+.cam-live { font-family: var(--mono); font-size: 8px; color: var(--accent3); margin-left: auto; display: flex; align-items: center; gap: 3px; }
+.cam-live::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--accent3); box-shadow: 0 0 4px var(--accent3); animation: pulse 1.5s infinite; }
+.cam-alert-badge { position: absolute; top: 6px; right: 6px; background: var(--accent2); color: white; font-family: var(--mono); font-size: 8px; padding: 2px 6px; border-radius: 3px; font-weight: 700; animation: blink 1s infinite; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.cam-overlay { position: absolute; inset: 0; background: rgba(0,212,255,0.05); border: 1px solid rgba(0,212,255,0.3); opacity: 0; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; }
+.cam:hover .cam-overlay { opacity: 1; }
+.cam-overlay span { font-family: var(--mono); font-size: 9px; color: var(--accent); letter-spacing: 1px; background: rgba(0,0,0,0.7); padding: 4px 10px; border: 1px solid rgba(0,212,255,0.3); }
+.person-box { position: absolute; border: 1.5px solid var(--accent3); box-shadow: 0 0 6px rgba(0,255,157,0.3); }
+.person-label { position: absolute; top: -16px; left: 0; font-family: var(--mono); font-size: 7px; color: var(--accent3); background: rgba(0,0,0,0.8); padding: 1px 4px; white-space: nowrap; }
+.activity { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.activity-list { padding: 6px 0; max-height: 280px; overflow-y: auto; }
+.activity-list::-webkit-scrollbar { width: 3px; }
+.activity-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.activity-item { display: flex; gap: 10px; padding: 8px 16px; border-bottom: 1px solid rgba(30,45,66,0.5); transition: background 0.15s; cursor: default; }
+.activity-item:hover { background: var(--surface2); }
+.activity-item:last-child { border-bottom: none; }
+.activity-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.dot-green { background: var(--accent3); box-shadow: 0 0 5px var(--accent3); }
+.dot-red { background: var(--accent2); box-shadow: 0 0 5px var(--accent2); }
+.dot-cyan { background: var(--accent); box-shadow: 0 0 5px var(--accent); }
+.dot-yellow { background: var(--accent4); box-shadow: 0 0 5px var(--accent4); }
+.activity-text { flex: 1; font-size: 11.5px; line-height: 1.4; }
+.activity-name { font-weight: 500; color: var(--text); }
+.activity-desc { color: var(--text2); font-size: 10.5px; }
+.activity-time { font-family: var(--mono); font-size: 9px; color: var(--text3); flex-shrink: 0; margin-top: 2px; }
+.grid-bottom { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.members { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; grid-column: span 2; }
+.member-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.member-table th { font-family: var(--mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); padding: 8px 16px; text-align: left; border-bottom: 1px solid var(--border); background: var(--surface2); }
+.member-table td { padding: 9px 16px; border-bottom: 1px solid rgba(30,45,66,0.4); vertical-align: middle; }
+.member-table tr:last-child td { border-bottom: none; }
+.member-table tr:hover td { background: var(--surface2); }
+.member-avatar-sm { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: var(--display); font-size: 10px; font-weight: 700; color: white; margin-right: 8px; vertical-align: middle; }
+.status-tag { font-family: var(--mono); font-size: 9px; padding: 3px 8px; border-radius: 4px; font-weight: 500; }
+.tag-in { background: rgba(0,255,157,0.12); color: var(--accent3); border: 1px solid rgba(0,255,157,0.2); }
+.tag-out { background: rgba(255,61,90,0.1); color: var(--accent2); border: 1px solid rgba(255,61,90,0.2); }
+.tag-reserved { background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid rgba(0,212,255,0.2); }
+.integrations { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.integration-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid rgba(30,45,66,0.4); transition: background 0.15s; }
+.integration-item:last-child { border-bottom: none; }
+.integration-item:hover { background: var(--surface2); }
+.integration-icon { width: 28px; height: 28px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+.integration-name { font-size: 12px; font-weight: 500; }
+.integration-status { font-family: var(--mono); font-size: 9px; color: var(--text2); }
+.integration-toggle { margin-left: auto; width: 32px; height: 17px; border-radius: 10px; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
+.integration-toggle.on { background: var(--accent3); }
+.integration-toggle.off { background: var(--border2); }
+.integration-toggle::after { content: ''; position: absolute; top: 2px; width: 13px; height: 13px; border-radius: 50%; background: white; transition: left 0.2s; }
+.integration-toggle.on::after { left: 17px; }
+.integration-toggle.off::after { left: 2px; }
+.mini-chart { padding: 10px 16px 14px; }
+.chart-bars { display: flex; align-items: flex-end; gap: 4px; height: 50px; }
+.bar { flex: 1; border-radius: 2px 2px 0 0; background: rgba(0,212,255,0.2); transition: all 0.3s; cursor: pointer; }
+.bar:hover { background: rgba(0,212,255,0.5); }
+.bar.highlight { background: var(--accent); }
+.chart-labels { display: flex; gap: 4px; margin-top: 4px; }
+.chart-label { flex: 1; font-family: var(--mono); font-size: 8px; color: var(--text3); text-align: center; }
+.alert-banner { margin: 0 24px 16px; background: rgba(255,61,90,0.08); border: 1px solid rgba(255,61,90,0.25); border-radius: 6px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.alert-icon { font-size: 16px; flex-shrink: 0; }
+.alert-text { flex: 1; font-size: 12px; }
+.alert-text strong { color: var(--accent2); }
+.alert-dismiss { font-family: var(--mono); font-size: 9px; color: var(--text2); cursor: pointer; padding: 3px 8px; border: 1px solid var(--border2); border-radius: 3px; flex-shrink: 0; }
+.lock-status { padding: 14px 16px; }
+.lock-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--surface2); border-radius: 6px; margin-bottom: 8px; border: 1px solid var(--border); cursor: pointer; }
+.lock-item:last-child { margin-bottom: 0; }
+.lock-icon { font-size: 18px; width: 30px; text-align: center; }
+.lock-name { font-size: 12px; font-weight: 500; flex: 1; }
+.lock-location { font-size: 10px; color: var(--text2); }
+.lock-btn { font-family: var(--mono); font-size: 9px; padding: 4px 10px; border-radius: 4px; border: none; cursor: pointer; font-weight: 700; transition: all 0.15s; }
+.lock-btn.locked { background: rgba(255,61,90,0.15); color: var(--accent2); border: 1px solid rgba(255,61,90,0.3); }
+.lock-btn.unlocked { background: rgba(0,255,157,0.12); color: var(--accent3); border: 1px solid rgba(0,255,157,0.2); }
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="1.8">
+        <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z"/>
+        <circle cx="12" cy="12" r="2.5" fill="#00d4ff" stroke="none"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-text">SENTINEL</div>
+      <div class="logo-version">HUB v1.0</div>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">メイン</div>
+    <div class="nav-item active" onclick="setNav(this)"><span class="nav-icon">⬡</span> ダッシュボード</div>
+    <div class="nav-item" onclick="setNav(this)"><span class="nav-icon">📷</span> カメラ管理<span class="nav-badge">4</span></div>
+    <div class="nav-item" onclick="setNav(this)"><span class="nav-icon">🔐</span> 入退室ログ</div>
+    <div class="nav-item" onclick="setNav(this)"><span class="nav-icon">👤</span> 会員管理</div>
+    <div class="nav-item" onclick="setNav(this)"><span class="nav-icon">🔔</span> アラート<span class="nav-badge">2</span></div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">設定</div>
+    <div class="nav-item" onclick="setNav(this)"><span class="nav-icon">🔗</span> 連携設定</div>
+    <div class="nav-item" onclick="setNav(this)"><span class="nav-icon">🏢</span> 拠点管理</div>
+    <div class="nav-item" onclick="setNav(this)"><span class="nav-icon">⚙️</span> システム設定</div>
+  </div>
+  <div class="sidebar-spacer"></div>
+  <div class="sidebar-bottom">
+    <div class="user-card">
+      <div class="user-avatar">管</div>
+      <div>
+        <div class="user-name">管理者</div>
+        <div class="user-role">Admin</div>
+      </div>
+    </div>
+  </div>
+</aside>
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">ダッシュボード</div>
+      <div class="topbar-sub">2026.03.17 — リアルタイム監視</div>
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-location">
+      <div class="status-dot"></div>
+      渋谷店 / 新宿店 / 池袋店
+    </div>
+    <div class="topbar-alert">🔔<div class="alert-count">2</div></div>
+  </div>
+  <div class="alert-banner" id="alertBanner">
+    <div class="alert-icon">⚠️</div>
+    <div class="alert-text"><strong>【渋谷店】</strong> 23:14 — バックヤードで不審な動体を検知。Telegramに画像通知済み。</div>
+    <div class="alert-dismiss" onclick="document.getElementById('alertBanner').style.display='none'">閉じる</div>
+  </div>
+  <div class="content">
+    <div class="stats-row">
+      <div class="stat-card cyan">
+        <div class="stat-label">現在の入室者数</div>
+        <div class="stat-value">23</div>
+        <div class="stat-change">3拠点合計 / 定員80 <span>▲3</span></div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label">本日のアラート</div>
+        <div class="stat-value">2</div>
+        <div class="stat-change">未対応 2件 / 解決済 5件</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">本日の入退室</div>
+        <div class="stat-value">87</div>
+        <div class="stat-change">自動開錠 <span>82件</span> / 手動 5件</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-label">稼働カメラ数</div>
+        <div class="stat-value">12</div>
+        <div class="stat-change">全12台 <span>正常稼働中</span></div>
+      </div>
+    </div>
+    <div class="grid-main">
+      <div class="camera-grid">
+        <div class="panel-header">
+          <div class="panel-title">📷 ライブカメラ</div>
+          <div class="panel-sub">渋谷店 — 4台</div>
+        </div>
+        <div class="cameras">
+          <div class="cam cam-1">
+            <div class="cam-bg">
+              <div class="person-box" style="left:30%;top:25%;width:22%;height:55%;">
+                <div class="person-label">人物 98%</div>
+              </div>
+            </div>
+            <div class="cam-info"><span class="cam-name">CAM-01 エントランス</span><span class="cam-live">LIVE</span></div>
+            <div class="cam-overlay"><span>フルスクリーン</span></div>
+          </div>
+          <div class="cam cam-2">
+            <div class="cam-bg"></div>
+            <div class="cam-alert-badge">MOTION</div>
+            <div class="cam-info"><span class="cam-name">CAM-02 バックヤード</span><span class="cam-live">LIVE</span></div>
+            <div class="cam-overlay"><span>フルスクリーン</span></div>
+          </div>
+          <div class="cam cam-3">
+            <div class="cam-bg"></div>
+            <div class="cam-info"><span class="cam-name">CAM-03 駐車場</span><span class="cam-live">LIVE</span></div>
+            <div class="cam-overlay"><span>フルスクリーン</span></div>
+          </div>
+          <div class="cam cam-4">
+            <div class="cam-bg">
+              <div class="person-box" style="left:55%;top:20%;width:18%;height:50%;">
+                <div class="person-label">人物 95%</div>
+              </div>
+            </div>
+            <div class="cam-info"><span class="cam-name">CAM-04 ラウンジ</span><span class="cam-live">LIVE</span></div>
+            <div class="cam-overlay"><span>フルスクリーン</span></div>
+          </div>
+        </div>
+        <div class="mini-chart">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">本日の入室数推移</div>
+          <div class="chart-bars">
+            <div class="bar" style="height:20%"></div>
+            <div class="bar" style="height:10%"></div>
+            <div class="bar" style="height:35%"></div>
+            <div class="bar" style="height:55%"></div>
+            <div class="bar" style="height:70%"></div>
+            <div class="bar highlight" style="height:90%"></div>
+            <div class="bar" style="height:75%"></div>
+            <div class="bar" style="height:80%"></div>
+            <div class="bar" style="height:65%"></div>
+            <div class="bar" style="height:50%"></div>
+            <div class="bar" style="height:40%"></div>
+            <div class="bar" style="height:60%"></div>
+          </div>
+          <div class="chart-labels">
+            <div class="chart-label">8</div><div class="chart-label">9</div>
+            <div class="chart-label">10</div><div class="chart-label">11</div>
+            <div class="chart-label">12</div><div class="chart-label">13</div>
+            <div class="chart-label">14</div><div class="chart-label">15</div>
+            <div class="chart-label">16</div><div class="chart-label">17</div>
+            <div class="chart-label">18</div><div class="chart-label">19</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="activity">
+          <div class="panel-header"><div class="panel-title">⚡ リアルタイムログ</div></div>
+          <div class="activity-list">
+            <div class="activity-item"><div class="activity-dot dot-green"></div><div class="activity-text"><div class="activity-name">田中 健太</div><div class="activity-desc">エントランス 入室 — 顔認証</div></div><div class="activity-time">14:32</div></div>
+            <div class="activity-item"><div class="activity-dot dot-red"></div><div class="activity-text"><div class="activity-name">不審者検知</div><div class="activity-desc">CAM-02 バックヤード — Telegram通知済</div></div><div class="activity-time">14:28</div></div>
+            <div class="activity-item"><div class="activity-dot dot-cyan"></div><div class="activity-text"><div class="activity-name">Cobot 同期</div><div class="activity-desc">予約確定 → ゲート自動開錠</div></div><div class="activity-time">14:20</div></div>
+            <div class="activity-item"><div class="activity-dot dot-green"></div><div class="activity-text"><div class="activity-name">鈴木 美咲</div><div class="activity-desc">エントランス 入室 — QRコード</div></div><div class="activity-time">14:15</div></div>
+            <div class="activity-item"><div class="activity-dot dot-yellow"></div><div class="activity-text"><div class="activity-name">SwitchBot</div><div class="activity-desc">会議室B ロック解除 — Webhook</div></div><div class="activity-time">14:10</div></div>
+          </div>
+        </div>
+        <div class="activity">
+          <div class="panel-header"><div class="panel-title">🔐 ロック制御</div></div>
+          <div class="lock-status">
+            <div class="lock-item"><div class="lock-icon">🔒</div><div><div class="lock-name">メインゲート</div><div class="lock-location">渋谷店 1F</div></div><button class="lock-btn locked" onclick="toggleLock(this)">LOCKED</button></div>
+            <div class="lock-item"><div class="lock-icon">🔓</div><div><div class="lock-name">会議室A</div><div class="lock-location">渋谷店 2F</div></div><button class="lock-btn unlocked" onclick="toggleLock(this)">OPEN</button></div>
+            <div class="lock-item"><div class="lock-icon">🔒</div><div><div class="lock-name">サーバールーム</div><div class="lock-location">渋谷店 B1</div></div><button class="lock-btn locked" onclick="toggleLock(this)">LOCKED</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-bottom">
+      <div class="members">
+        <div class="panel-header"><div class="panel-title">👤 会員状況</div><div class="panel-sub">本日 23名入室中</div></div>
+        <table class="member-table">
+          <thead><tr><th>会員名</th><th>プラン</th><th>入室時刻</th><th>認証方法</th><th>ステータス</th></tr></thead>
+          <tbody>
+            <tr><td><span class="member-avatar-sm" style="background:linear-gradient(135deg,#00d4ff,#0060ff)">田</span>田中 健太</td><td style="color:var(--text2)">スタンダード</td><td style="font-family:var(--mono);font-size:11px">14:32</td><td style="font-family:var(--mono);font-size:10px;color:var(--accent)">顔認証</td><td><span class="status-tag tag-in">入室中</span></td></tr>
+            <tr><td><span class="member-avatar-sm" style="background:linear-gradient(135deg,#ff3d5a,#ff8c00)">鈴</span>鈴木 美咲</td><td style="color:var(--text2)">デイリー</td><td style="font-family:var(--mono);font-size:11px">14:15</td><td style="font-family:var(--mono);font-size:10px;color:var(--accent4)">QRコード</td><td><span class="status-tag tag-in">入室中</span></td></tr>
+            <tr><td><span class="member-avatar-sm" style="background:linear-gradient(135deg,#00ff9d,#00a0ff)">佐</span>佐藤 陽介</td><td style="color:var(--text2)">プレミアム</td><td style="font-family:var(--mono);font-size:11px">09:00</td><td style="font-family:var(--mono);font-size:10px;color:var(--accent)">顔認証</td><td><span class="status-tag tag-in">入室中</span></td></tr>
+            <tr><td><span class="member-avatar-sm" style="background:linear-gradient(135deg,#a855f7,#6366f1)">山</span>山本 大輔</td><td style="color:var(--text2)">スタンダード</td><td style="font-family:var(--mono);font-size:11px">13:40</td><td style="font-family:var(--mono);font-size:10px;color:var(--accent4)">QRコード</td><td><span class="status-tag tag-out">退室済</span></td></tr>
+            <tr><td><span class="member-avatar-sm" style="background:linear-gradient(135deg,#ffb800,#ff6b00)">伊</span>伊藤 花子</td><td style="color:var(--text2)">プレミアム</td><td style="font-family:var(--mono);font-size:11px">—</td><td style="font-family:var(--mono);font-size:10px;color:var(--text3)">—</td><td><span class="status-tag tag-reserved">予約済</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="integrations">
+        <div class="panel-header"><div class="panel-title">🔗 連携サービス</div></div>
+        <div class="integration-item"><div class="integration-icon" style="background:rgba(0,212,255,0.1)">📅</div><div><div class="integration-name">Cobot</div><div class="integration-status">予約 → 自動開錠</div></div><div class="integration-toggle on" onclick="toggleIntegration(this)"></div></div>
+        <div class="integration-item"><div class="integration-icon" style="background:rgba(0,255,157,0.1)">🌐</div><div><div class="integration-name">Nexudus</div><div class="integration-status">会員データ同期</div></div><div class="integration-toggle on" onclick="toggleIntegration(this)"></div></div>
+        <div class="integration-item"><div class="integration-icon" style="background:rgba(255,184,0,0.1)">⚡</div><div><div class="integration-name">Zapier</div><div class="integration-status">カスタムWebhook</div></div><div class="integration-toggle on" onclick="toggleIntegration(this)"></div></div>
+        <div class="integration-item"><div class="integration-icon" style="background:rgba(255,61,90,0.1)">📱</div><div><div class="integration-name">Telegram Bot</div><div class="integration-status">アラート通知</div></div><div class="integration-toggle on" onclick="toggleIntegration(this)"></div></div>
+        <div class="integration-item"><div class="integration-icon" style="background:rgba(120,120,255,0.1)">🔌</div><div><div class="integration-name">REST API</div><div class="integration-status">外部開発者向け</div></div><div class="integration-toggle off" onclick="toggleIntegration(this)"></div></div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+<script>
+function setNav(el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+}
+function toggleLock(btn) {
+  if (btn.classList.contains('locked')) {
+    btn.classList.replace('locked','unlocked');
+    btn.textContent = 'OPEN';
+    btn.closest('.lock-item').querySelector('.lock-icon').textContent = '🔓';
+  } else {
+    btn.classList.replace('unlocked','locked');
+    btn.textContent = 'LOCKED';
+    btn.closest('.lock-item').querySelector('.lock-icon').textContent = '🔒';
+  }
+}
+function toggleIntegration(t) {
+  t.classList.toggle('on');
+  t.classList.toggle('off');
+}
+</script>
+</body>
+</html>
